@@ -61,3 +61,26 @@ Route::post('/checkout/{slug}', function (\Illuminate\Http\Request $request, str
     session()->put('last_order', ['number' => $order, 'contact' => $data['contact'], 'product' => $products[$slug]['name']]);
     return redirect()->route('checkout.show', $slug)->with('success', 'Заказ создан. Администратор свяжется с вами после подтверждения оплаты.');
 })->name('checkout.store');
+
+Route::get('/admin/login', function () {
+    return view('admin.login');
+})->name('admin.login');
+
+Route::post('/admin/login', function (\Illuminate\Http\Request $request) {
+    $credentials = $request->validate(['username' => ['required'], 'password' => ['required']]);
+    if ($credentials['username'] !== env('ADMIN_USER', 'urail1999') || !hash_equals((string) env('ADMIN_PASSWORD', 'papacheat'), (string) $credentials['password'])) {
+        return back()->withErrors(['username' => 'Неверный логин или пароль.']);
+    }
+    $request->session()->put('is_admin', true);
+    return redirect()->route('admin.dashboard');
+})->name('admin.login.store');
+
+Route::get('/admin', function (\Illuminate\Http\Request $request) use ($products) {
+    if (!$request->session()->get('is_admin')) return redirect()->route('admin.login');
+    return view('admin.dashboard', ['products' => $products, 'lastOrder' => $request->session()->get('last_order')]);
+})->name('admin.dashboard');
+
+Route::post('/admin/logout', function (\Illuminate\Http\Request $request) {
+    $request->session()->forget('is_admin');
+    return redirect()->route('admin.login');
+})->name('admin.logout');
