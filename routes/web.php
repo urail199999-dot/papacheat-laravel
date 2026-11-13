@@ -2,6 +2,49 @@
 
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
+$products = [
+    'tundra-web-radar' => [
+        'name' => 'Tundra WEB Radar', 'game' => 'Arena Breakout: Infinite', 'price' => '500 ₽', 'term' => '1 день',
+        'summary' => 'Браузерная карта рейда с игроками, ИИ, лутом, опасностями и выходами в реальном времени.',
+        'description' => 'Tundra WEB Radar открывается во вкладке браузера на втором мониторе, компьютере или смартфоне. Радар показывает игроков, ботов, боссов, лут и выходы, а локация определяется автоматически.',
+        'requirements' => ['Windows 10/11 x64', 'Процессор Intel или AMD', 'Официальный лаунчер или Steam', 'Браузер на ПК, втором мониторе или телефоне'],
+        'features' => ['ЧВК и Дикие: ник, команда, уровень, дистанция и направление', 'Здоровье, оружие, патроны, броня и шлем', 'Боты, боссы, свита и элита с отдельными цветами', 'Лут с фильтром по цене и сундуки павших ЧВК', 'Гранаты, мины, клейморы и точки выхода', 'Ферма, Долина, Нортридж, Арсенал, Аэропорт и Телецентр'],
+    ],
+    'spoofer' => [
+        'name' => 'SPOOFER', 'game' => 'Arena Breakout: Infinite', 'price' => '5 000 ₽', 'term' => 'один раз',
+        'summary' => 'HWID Spoofer для Arena Breakout: Infinite с запуском на Windows 10/11 x64.',
+        'description' => 'HWID Spoofer — это программа, которая подменяет аппаратные идентификаторы компьютера и помогает обойти бан по железу. Работает только с Arena Breakout: Infinite.',
+        'requirements' => ['Windows 10 или Windows 11 (64-bit)', 'Клиент игры Arena Breakout: Infinite', 'Права администратора Windows'],
+        'features' => ['Подмена аппаратных идентификаторов', 'Запуск перед игрой', 'Статус Undetected', 'Тариф на один запуск'],
+    ],
+    'spoofer-lifetime' => [
+        'name' => 'SPOOFER — навсегда', 'game' => 'Arena Breakout: Infinite', 'price' => '12 000 ₽', 'term' => 'навсегда',
+        'summary' => 'HWID Spoofer с ключом навсегда для Arena Breakout: Infinite.',
+        'description' => 'HWID Spoofer подменяет аппаратные идентификаторы компьютера и помогает обойти бан по железу. После покупки ключ выдаётся навсегда.',
+        'requirements' => ['Windows 10 или Windows 11 (64-bit)', 'Клиент игры Arena Breakout: Infinite', 'Права администратора Windows'],
+        'features' => ['Подмена аппаратных идентификаторов', 'Ключ выдаётся навсегда', 'Запуск перед игрой', 'Статус Undetected'],
+    ],
+    'lag-switch-arena' => [
+        'name' => 'Lag Switch', 'game' => 'Arena Breakout: Infinite', 'price' => '1 000 ₽', 'term' => 'навсегда',
+        'summary' => 'Программа имитирует высокую задержку или вызывает кратковременную потерю пакетов.',
+        'description' => 'Lag Switch управляет сетевой задержкой во время игры и позволяет быстро включать или отключать эффект через горячую клавишу.',
+        'requirements' => ['Windows 10/11 x64', 'Arena Breakout: Infinite', 'Стабильное подключение к сети'],
+        'features' => ['Имитация высокой задержки', 'Кратковременная потеря пакетов', 'Горячая клавиша включения', 'Статус Undetected'],
+    ],
+    'lag-switch-dayz' => [
+        'name' => 'Lag Switch', 'game' => 'DayZ', 'price' => '1 000 ₽', 'term' => 'навсегда',
+        'summary' => 'Программа имитирует высокую задержку или вызывает кратковременную потерю пакетов.',
+        'description' => 'Lag Switch для DayZ управляет сетевой задержкой и позволяет быстро включать или отключать эффект во время игры.',
+        'requirements' => ['Windows 10/11 x64', 'Клиент DayZ', 'Стабильное подключение к сети'],
+        'features' => ['Имитация высокой задержки', 'Кратковременная потеря пакетов', 'Горячая клавиша включения', 'Статус Undetected'],
+    ],
+];
+
+Route::get('/', function () use ($products) {
+    return view('welcome', compact('products'));
 });
+
+Route::get('/product/{slug}', function (string $slug) use ($products) {
+    abort_unless(isset($products[$slug]), 404);
+    return view('product', ['product' => $products[$slug], 'slug' => $slug]);
+})->name('product.show');
