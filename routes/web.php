@@ -48,3 +48,16 @@ Route::get('/product/{slug}', function (string $slug) use ($products) {
     abort_unless(isset($products[$slug]), 404);
     return view('product', ['product' => $products[$slug], 'slug' => $slug]);
 })->name('product.show');
+
+Route::get('/checkout/{slug}', function (string $slug) use ($products) {
+    abort_unless(isset($products[$slug]), 404);
+    return view('checkout', ['product' => $products[$slug], 'slug' => $slug]);
+})->name('checkout.show');
+
+Route::post('/checkout/{slug}', function (\Illuminate\Http\Request $request, string $slug) use ($products) {
+    abort_unless(isset($products[$slug]), 404);
+    $data = $request->validate(['contact' => ['required', 'string', 'max:120']]);
+    $order = 'PC-' . strtoupper(substr(str_replace('-', '', (string) \Illuminate\Support\Str::uuid()), 0, 10));
+    session()->put('last_order', ['number' => $order, 'contact' => $data['contact'], 'product' => $products[$slug]['name']]);
+    return redirect()->route('checkout.show', $slug)->with('success', 'Заказ создан. Администратор свяжется с вами после подтверждения оплаты.');
+})->name('checkout.store');
