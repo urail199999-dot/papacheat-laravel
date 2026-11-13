@@ -6,7 +6,8 @@ RUN sed -i 's/https:/http:/g' /etc/apk/repositories \
     && apk del $PHPIZE_DEPS
 WORKDIR /var/www/html
 COPY composer.json composer.lock ./
-RUN composer install --no-interaction --prefer-dist --no-dev --optimize-autoloader
+RUN composer install --no-interaction --prefer-dist --no-dev --no-scripts
 COPY . .
+RUN composer dump-autoload --optimize
 RUN chown -R www-data:www-data storage bootstrap/cache
 CMD ["php-fpm"]
