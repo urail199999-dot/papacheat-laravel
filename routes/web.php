@@ -38,23 +38,43 @@ $products = [
         'requirements' => ['Windows 10/11 x64', 'Клиент DayZ', 'Стабильное подключение к сети'],
         'features' => ['Имитация высокой задержки', 'Кратковременная потеря пакетов', 'Горячая клавиша включения', 'Статус Undetected'],
     ],
-];
+ ];
 
-Route::get('/', function () use ($products) {
+$catalog = function () use (&$products) {
+    $path = storage_path('app/products.json');
+    if (!is_file($path)) {
+        @mkdir(dirname($path), 0777, true);
+        file_put_contents($path, json_encode($products, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+    }
+    $data = json_decode((string) file_get_contents($path), true);
+    return is_array($data) ? $data : $products;
+};
+
+$saveCatalog = function (array $data) {
+    $path = storage_path('app/products.json');
+    @mkdir(dirname($path), 0777, true);
+    file_put_contents($path, json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+};
+
+Route::get('/', function () use ($catalog) {
+    $products = array_filter($catalog(), fn ($p) => empty($p['hidden']));
     return view('welcome', compact('products'));
 });
 
-Route::get('/product/{slug}', function (string $slug) use ($products) {
+Route::get('/product/{slug}', function (string $slug) use ($catalog) {
+    $products = $catalog();
     abort_unless(isset($products[$slug]), 404);
     return view('product', ['product' => $products[$slug], 'slug' => $slug]);
 })->name('product.show');
 
-Route::get('/checkout/{slug}', function (string $slug) use ($products) {
+Route::get('/checkout/{slug}', function (string $slug) use ($catalog) {
+    $products = $catalog();
     abort_unless(isset($products[$slug]), 404);
     return view('checkout', ['product' => $products[$slug], 'slug' => $slug]);
 })->name('checkout.show');
 
-Route::post('/checkout/{slug}', function (\Illuminate\Http\Request $request, string $slug) use ($products) {
+Route::post('/checkout/{slug}', function (\Illuminate\Http\Request $request, string $slug) use ($catalog) {
+    $products = $catalog();
     abort_unless(isset($products[$slug]), 404);
     $data = $request->validate(['contact' => ['required', 'string', 'max:120']]);
     $order = 'PC-' . strtoupper(substr(str_replace('-', '', (string) \Illuminate\Support\Str::uuid()), 0, 10));
@@ -75,10 +95,25 @@ Route::post('/admin/login', function (\Illuminate\Http\Request $request) {
     return redirect()->route('admin.dashboard');
 })->name('admin.login.store');
 
-Route::get('/admin', function (\Illuminate\Http\Request $request) use ($products) {
+Route::get('/admin', function (\Illuminate\Http\Request $request) use ($catalog) {
     if (!$request->session()->get('is_admin')) return redirect()->route('admin.login');
+    $products = $catalog();
     return view('admin.dashboard', ['products' => $products, 'lastOrder' => $request->session()->get('last_order')]);
 })->name('admin.dashboard');
+
+Route::get('/admin/products/{slug}/edit', function (\Illuminate\Http\Request $request, string $slug) use ($catalog) {
+    abort_unless($request->session()->get('is_admin'), 403);
+    $products = $catalog(); abort_unless(isset($products[$slug]), 404);
+    return view('admin.edit', ['product' => $products[$slug], 'slug' => $slug]);
+})->name('admin.products.edit');
+
+Route::post('/admin/products/{slug}', function (\Illuminate\Http\Request $request, string $slug) use ($catalog, $saveCatalog) {
+    abort_unless($request->session()->get('is_admin'), 403);
+    $products = $catalog(); abort_unless(isset($products[$slug]), 404);
+    $data = $request->validate(['name' => ['required','string','max:120'], 'price' => ['required','string','max:40'], 'status' => ['required','in:Undetected,Detectable'], 'hidden' => ['nullable']]);
+    $products[$slug]['name'] = $data['name']; $products[$slug]['price'] = $data['price']; $products[$slug]['status'] = $data['status']; $products[$slug]['hidden'] = $request->boolean('hidden');
+    $saveCatalog($products); return redirect()->route('admin.dashboard')->with('success', 'Товар сохранён.');
+})->name('admin.products.update');
 
 Route::post('/admin/logout', function (\Illuminate\Http\Request $request) {
     $request->session()->forget('is_admin');
