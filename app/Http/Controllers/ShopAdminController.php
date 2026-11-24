@@ -94,7 +94,9 @@ class ShopAdminController extends Controller
             $locked = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
             abort_if($locked->assigned_to && $locked->assigned_to !== $r->user()->id, 409);
             $locked->update(['assigned_to' => $r->user()->id, 'status' => 'processing']);
-            Alert::create(['user_id' => $locked->user_id, 'order_id' => $locked->id, 'body' => 'Заказ '.$locked->number.' принят в обработку: '.$r->user()->name]);
+            if ($locked->user_id) {
+                Alert::create(['user_id' => $locked->user_id, 'order_id' => $locked->id, 'body' => 'Заказ '.$locked->number.' принят в обработку: '.$r->user()->name]);
+            }
         });
 
         return back();
@@ -105,7 +107,9 @@ class ShopAdminController extends Controller
         $data = $r->validate(['status' => 'required|in:processing,completed,not_completed', 'payment_status' => 'required|in:pending,reported,confirmed']);
         abort_unless($order->assigned_to === $r->user()->id, 409, 'Сначала возьмите заказ в обработку.');
         $order->update($data);
-        Alert::create(['user_id' => $order->user_id, 'order_id' => $order->id, 'body' => 'Обновлён статус заказа '.$order->number]);
+        if ($order->user_id) {
+            Alert::create(['user_id' => $order->user_id, 'order_id' => $order->id, 'body' => 'Обновлён статус заказа '.$order->number]);
+        }
 
         return back();
     }
@@ -122,6 +126,6 @@ class ShopAdminController extends Controller
         abort_if(in_array($order->status, ['new', 'processing']), 409, 'Активный заказ нельзя удалить.');
         $order->delete();
 
-        return redirect('/manage')->with('success','История заказа удалена.');
+        return redirect('/manage')->with('success', 'История заказа удалена.');
     }
 }

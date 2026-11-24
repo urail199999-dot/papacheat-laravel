@@ -101,7 +101,7 @@ class ShopController extends Controller
         $path = $r->hasFile('file') ? $r->file('file')->store('chat', 'local') : null;
         $order->messages()->create(['user_id' => $r->user()->id, 'body' => $r->body, 'file_path' => $path, 'file_name' => $r->file('file')?->getClientOriginalName(), 'mime' => $r->file('file')?->getMimeType()]);
         $recipients = $r->user()->id === $order->user_id ? User::where('is_admin', true)->where('name', 'urail1999')->pluck('id') : collect([$order->user_id]);
-        foreach ($recipients as $id) {
+        foreach ($recipients->filter() as $id) {
             Alert::create(['user_id' => $id, 'order_id' => $order->id, 'body' => 'Сообщение в заказе '.$order->number]);
         }
 
@@ -123,7 +123,7 @@ class ShopController extends Controller
             $order->update(['payment_status' => 'reported']);
         }
 
-return back()->with('success', 'Заявка отправлена. Оплату проверяет администратор.');
+        return back()->with('success', 'Заявка отправлена. Оплату проверяет администратор.');
     }
 
     public function pulse(Request $r)
