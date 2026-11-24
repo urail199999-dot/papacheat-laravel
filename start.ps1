@@ -1,8 +1,17 @@
 $ErrorActionPreference = 'Stop'
 Set-Location $PSScriptRoot
 function Step([string[]]$DockerArguments) {
-    & docker @DockerArguments
-    if ($LASTEXITCODE -ne 0) { throw "Docker command failed. Stop and inspect the error above." }
+    # Windows PowerShell 5.1 treats redirected native stderr as ErrorRecord.
+    # Docker writes progress there even when the command succeeds.
+    $previousPreference = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = 'Continue'
+        & docker @DockerArguments
+        $dockerExitCode = $LASTEXITCODE
+    } finally {
+        $ErrorActionPreference = $previousPreference
+    }
+    if ($dockerExitCode -ne 0) { throw "Docker command failed. Stop and inspect the error above." }
 }
 if (!(Test-Path .env)) { Copy-Item .env.example .env }
 if (!(Select-String -Path .env -Pattern '^APP_KEY=')) { Add-Content .env "`nAPP_KEY=" }
