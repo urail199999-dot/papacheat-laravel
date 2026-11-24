@@ -25,3 +25,10 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
+/storage/app/products.json
+/storage/app/private/chat/
+/storage/app/public/products/
+/bootstrap/cache/*.php
+/bootstrap/cache/*.json
+
+/storage/preview.sqlite

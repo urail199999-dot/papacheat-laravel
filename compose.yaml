@@ -6,7 +6,6 @@ services:
     working_dir: /var/www/html
     volumes:
       - ./:/var/www/html
-    env_file: .env
     depends_on:
       db:
         condition: service_healthy
@@ -14,7 +13,7 @@ services:
   web:
     image: nginx:1.27-alpine
     ports:
-      - "8080:80"
+      - "127.0.0.1:8080:80"
     volumes:
       - ./:/var/www/html:ro
       - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
@@ -28,8 +27,6 @@ services:
       MARIADB_USER: papacheat
       MARIADB_PASSWORD: papacheat
       MARIADB_ROOT_PASSWORD: root
-    ports:
-      - "3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:

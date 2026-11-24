@@ -1,0 +1,7 @@
+@extends('shop.layout')
+@section('title',$product->name.' — PAPACHEAT')
+@section('content')
+<a href="/">← Каталог</a><h1>{{ $product->name }}</h1><div class="row"><span class="tag {{ $product->status==='Detectable'?'danger':'' }}">{{ $product->status }}</span><span>{{ $product->category->name }}</span>@auth @if(auth()->user()->is_admin)<a class="admin-only button" href="{{ route('admin.products.edit',$product) }}">Редактировать</a>@endif @endauth</div>
+@if($product->screenshots)<div class="gallery" aria-label="Скриншоты программы">@foreach($product->screenshots as $shot)<img src="{{ asset('storage/'.$shot) }}" alt="{{ $product->name }} — скриншот {{ $loop->iteration }}">@endforeach</div><small>Листайте скриншоты горизонтально →</small>@else<p class="muted">Скриншоты программы ещё не добавлены.</p>@endif
+<div class="two"><div><section class="panel"><h2>Описание</h2><p style="white-space:pre-wrap">{{ $product->description }}</p></section><section class="panel"><h2>Функционал</h2><ul>@foreach(explode("\n",$product->features) as $line)<li>{{ $line }}</li>@endforeach</ul></section></div><div><section class="panel"><h2>Системные требования</h2><ul>@foreach(explode("\n",$product->requirements) as $line)<li>{{ $line }}</li>@endforeach</ul></section><section class="panel"><span class="price">{{ number_format($product->price,0,',',' ') }} ₽</span><p>{{ $product->term }}</p><a class="button" href="{{ route('checkout.show',$product) }}">Оформить заказ</a></section></div></div>
+@endsection
